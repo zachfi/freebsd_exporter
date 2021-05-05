@@ -1,4 +1,4 @@
-module github.com/xaque208/nfs_exporter
+module github.com/xaque208/freebsd_exporter
 
 go 1.16
 
