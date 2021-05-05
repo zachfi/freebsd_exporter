@@ -8,12 +8,12 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/xaque208/nfs_exporter/exporter"
+	"github.com/xaque208/freebsd_exporter/exporter"
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "nfs_exporter",
-	Short: "Export nfsstats to Pometheus",
+	Use:   "freebsd_exporter",
+	Short: "Export FreeBSD stats to Pometheus",
 	Long:  "",
 	Run:   run,
 }
