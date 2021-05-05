@@ -54,10 +54,16 @@ func run(cmd *cobra.Command, args []string) {
 		log.SetLevel(log.InfoLevel)
 	}
 
+	log.WithFields(log.Fields{
+		"url": listenAddress,
+	}).Info("starting metrics listener")
+	go exporter.StartMetricsServer(listenAddress)
+
 	tick := time.NewTicker(time.Duration(interval) * time.Second)
 	for {
 		select {
 		case <-tick.C:
+			log.Debugf("scraping exporter")
 			err := exporter.Scrape()
 			if err != nil {
 				log.Error(err)
