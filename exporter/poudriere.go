@@ -2,6 +2,7 @@ package exporter
 
 import (
 	"bufio"
+	"bytes"
 	"io"
 	"os/exec"
 	"strconv"
@@ -29,15 +30,18 @@ type PoudriereStat struct {
 }
 
 func (s *PoudriereExporter) Scrape() error {
-	cmd := exec.Command("/usr/local/bin/poudriere", "status", "-fH")
-	out, err := cmd.StdoutPipe()
+	var err error
 
-	err = cmd.Run()
+	cmd := exec.Command("/usr/local/bin/poudriere", "status", "-fH")
+
+	out, err := cmd.Output()
 	if err != nil {
 		return err
 	}
 
-	stats, err := readPoudriereStats(out)
+	r := bytes.NewReader(out)
+
+	stats, err := readPoudriereStats(r)
 	if err != nil {
 		return err
 	}

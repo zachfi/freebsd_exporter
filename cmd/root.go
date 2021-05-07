@@ -18,8 +18,6 @@ var rootCmd = &cobra.Command{
 	Run:   run,
 }
 
-// nfsstat -E --libxo=json
-
 var (
 	verbose       bool
 	listenAddress string
