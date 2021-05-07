@@ -59,14 +59,22 @@ func run(cmd *cobra.Command, args []string) {
 	}).Info("starting metrics listener")
 	go exporter.StartMetricsServer(listenAddress)
 
+	exporters := []exporter.Exporter{
+		&exporter.NFSExporter{},
+		&exporter.PoudriereExporter{},
+	}
+
 	tick := time.NewTicker(time.Duration(interval) * time.Second)
 	for {
 		select {
 		case <-tick.C:
-			log.Debugf("scraping exporter")
-			err := exporter.Scrape()
-			if err != nil {
-				log.Error(err)
+			log.Debugf("scraping exporters")
+
+			for _, e := range exporters {
+				err := e.Scrape()
+				if err != nil {
+					log.Error(err)
+				}
 			}
 		}
 	}
