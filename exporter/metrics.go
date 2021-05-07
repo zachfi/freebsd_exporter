@@ -216,6 +216,12 @@ func init() {
 		nfsServerOperationsSecinfo,
 		nfsServerOperationsRellockown,
 		nfsServerOperationsV4Create,
+		poudriereStatusQueue,
+		poudriereStatusBuilt,
+		poudriereStatusFail,
+		poudriereStatusSkip,
+		poudriereStatusIgnore,
+		poudriereStatusRemain,
 	)
 }
 
