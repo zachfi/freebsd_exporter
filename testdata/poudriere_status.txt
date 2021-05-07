@@ -1,0 +1,4 @@
+-	default	larch12	2021-05-06_00h32m33s	done	19	19	0	0	0	0	00:33:07	/usr/local/poudriere/data/logs/bulk/larch12-default/2021-05-06_00h32m33s
+-	default	larch13	2021-05-06_00h00m05s	done	17	17	0	0	0	0	00:32:28	/usr/local/poudriere/data/logs/bulk/larch13-default/2021-05-06_00h00m05s
+-	personal	larch12	2021-05-06_09h05m41s	done	1	0	1	0	0	0	00:00:13	/usr/local/poudriere/data/logs/bulk/larch12-personal/2021-05-06_09h05m41s
+-	personal	larch13	2021-05-06_14h26m19s	parallel_build	4	2	0	0	0	2	00:01:48	/usr/local/poudriere/data/logs/bulk/larch13-personal/2021-05-06_14h26m19s

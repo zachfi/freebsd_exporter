@@ -6,7 +6,9 @@ import (
 	"os/exec"
 )
 
-func Scrape() error {
+type NFSExporter struct{}
+
+func (s *NFSExporter) Scrape() error {
 
 	cmd := exec.Command("/usr/bin/nfsstat", "-E", "--libxo=json")
 	var out bytes.Buffer
