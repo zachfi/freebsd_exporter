@@ -147,6 +147,25 @@ var (
 	nfsServerOperationsV4Create = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "nfs_server_operations_v4_create",
 	}, []string{})
+
+	poudriereStatusQueue = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "poudriere_status_queue",
+	}, []string{"ports", "jail"})
+	poudriereStatusBuilt = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "poudriere_status_built",
+	}, []string{"ports", "jail"})
+	poudriereStatusFail = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "poudriere_status_fail",
+	}, []string{"ports", "jail"})
+	poudriereStatusSkip = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "poudriere_status_skip",
+	}, []string{"ports", "jail"})
+	poudriereStatusIgnore = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "poudriere_status_ignore",
+	}, []string{"ports", "jail"})
+	poudriereStatusRemain = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "poudriere_status_remain",
+	}, []string{"ports", "jail"})
 )
 
 func init() {
