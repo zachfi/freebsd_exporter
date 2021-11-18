@@ -54,13 +54,11 @@ func (s *PoudriereExporter) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (s *PoudriereExporter) Collect(ch chan<- prometheus.Metric) {
-	var err error
-
 	cmd := exec.Command("/usr/local/bin/poudriere", "status", "-fH")
 
 	out, err := cmd.Output()
 	if err != nil {
-		level.Error(s.logger).Log("err", err.Error())
+		_ = level.Error(s.logger).Log("err", err.Error())
 		return
 	}
 
@@ -68,7 +66,7 @@ func (s *PoudriereExporter) Collect(ch chan<- prometheus.Metric) {
 
 	stats, err := readPoudriereStats(r)
 	if err != nil {
-		level.Error(s.logger).Log("err", err.Error())
+		_ = level.Error(s.logger).Log("err", err.Error())
 		return
 	}
 

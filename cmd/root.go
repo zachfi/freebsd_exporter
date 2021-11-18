@@ -3,12 +3,13 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"time"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/xaque208/freebsd_exporter/exporter"
+	"github.com/xaque208/freebsd_exporter/pkg/poudriere"
+	"github.com/xaque208/znet/pkg/util"
 )
 
 var rootCmd = &cobra.Command{
@@ -46,34 +47,17 @@ func initConfig() {
 }
 
 func run(cmd *cobra.Command, args []string) {
-	if verbose {
-		log.SetLevel(log.DebugLevel)
-	} else {
-		log.SetLevel(log.InfoLevel)
+	logger := util.NewLogger()
+
+	nfsExporter, err := nfs.NewExporter(logger)
+	if err == nil {
+		prometheus.MustRegister(nfsExporter)
 	}
 
-	log.WithFields(log.Fields{
-		"url": listenAddress,
-	}).Info("starting metrics listener")
-	go exporter.StartMetricsServer(listenAddress)
-
-	exporters := []exporter.Exporter{
-		&exporter.NFSExporter{},
-		&exporter.PoudriereExporter{},
+	poudriereExporter, err := poudriere.NewExporter(logger)
+	if err == nil {
+		prometheus.MustRegister(poudriereExporter)
 	}
 
-	tick := time.NewTicker(time.Duration(interval) * time.Second)
-	for {
-		select {
-		case <-tick.C:
-			log.Debugf("scraping exporters")
-
-			for _, e := range exporters {
-				err := e.Scrape()
-				if err != nil {
-					log.Error(err)
-				}
-			}
-		}
-	}
+	exporter.StartMetricsServer(listenAddress)
 }
