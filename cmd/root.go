@@ -2,12 +2,15 @@ package cmd
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 
+	"github.com/go-kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/xaque208/freebsd_exporter/exporter"
+	"github.com/xaque208/freebsd_exporter/pkg/nfs"
 	"github.com/xaque208/freebsd_exporter/pkg/poudriere"
 	"github.com/xaque208/znet/pkg/util"
 )
@@ -59,5 +62,6 @@ func run(cmd *cobra.Command, args []string) {
 		prometheus.MustRegister(poudriereExporter)
 	}
 
-	exporter.StartMetricsServer(listenAddress)
+	http.Handle("/metrics", promhttp.Handler())
+	level.Error(logger).Log(http.ListenAndServe(":8080", nil))
 }
