@@ -64,5 +64,5 @@ func run(cmd *cobra.Command, args []string) {
 	}
 
 	http.Handle("/metrics", promhttp.Handler())
-	_ = level.Error(logger).Log(http.ListenAndServe(":8080", nil))
+	_ = level.Error(logger).Log(http.ListenAndServe(listenAddress, nil))
 }
