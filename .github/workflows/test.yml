@@ -1,0 +1,51 @@
+name: Test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.17.x
+
+      - name: Add GOBIN to PATH
+        run: echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+        shell: bash
+
+      - name: Cache deps
+        uses: actions/cache@v2
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Tools
+        run: make tools
+
+      - name: Unit Tests
+        run: make test-unit
+
+      - name: Integration Tests
+        run: make test-integration
+
+      - name: Coverage Report
+        run: make cover-report
+
+      - uses: jandelgado/gcov2lcov-action@v1.0.8
+        with:
+          infile: coverage/coverage.out
+          outfile: coverage/coverage.lcov
+
+      - name: Coveralls
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path-to-lcov: coverage/coverage.lcov
