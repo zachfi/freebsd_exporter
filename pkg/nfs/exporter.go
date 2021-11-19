@@ -82,7 +82,7 @@ func (s *Exporter) Collect(ch chan<- prometheus.Metric) {
 	ch <- prometheus.MustNewConstMetric(
 		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Rdirplus), "rdirplus")
 	ch <- prometheus.MustNewConstMetric(
-		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Access), "acces")
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Access), "access")
 	ch <- prometheus.MustNewConstMetric(
 		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Mknod), "mknod")
 	ch <- prometheus.MustNewConstMetric(
@@ -93,8 +93,6 @@ func (s *Exporter) Collect(ch chan<- prometheus.Metric) {
 		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Pathconf), "pathconf")
 	ch <- prometheus.MustNewConstMetric(
 		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Commit), "commit")
-	ch <- prometheus.MustNewConstMetric(
-		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Lookup), "lookup")
 	ch <- prometheus.MustNewConstMetric(
 		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Setclientid), "setclientid")
 
@@ -120,7 +118,7 @@ func (s *Exporter) Collect(ch chan<- prometheus.Metric) {
 	ch <- prometheus.MustNewConstMetric(
 		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Lockt), "lockt")
 	ch <- prometheus.MustNewConstMetric(
-		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Locku), "localu")
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Locku), "locku")
 	ch <- prometheus.MustNewConstMetric(
 		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Close), "close")
 	ch <- prometheus.MustNewConstMetric(
