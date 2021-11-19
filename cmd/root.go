@@ -10,9 +10,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/xaque208/znet/pkg/util"
+
 	"github.com/xaque208/freebsd_exporter/pkg/nfs"
 	"github.com/xaque208/freebsd_exporter/pkg/poudriere"
-	"github.com/xaque208/znet/pkg/util"
 )
 
 var rootCmd = &cobra.Command{
