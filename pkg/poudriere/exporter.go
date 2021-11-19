@@ -23,11 +23,11 @@ var (
 	)
 )
 
-type PoudriereExporter struct {
+type Exporter struct {
 	logger log.Logger
 }
 
-type PoudriereStat struct {
+type Stat struct {
 	Set    string
 	Ports  string
 	Jail   string
@@ -43,17 +43,17 @@ type PoudriereStat struct {
 	Logs   string
 }
 
-func NewExporter(logger log.Logger) (*PoudriereExporter, error) {
-	return &PoudriereExporter{
+func NewExporter(logger log.Logger) (*Exporter, error) {
+	return &Exporter{
 		logger: log.With(logger, "exporter", "poudriere"),
 	}, nil
 }
 
-func (s *PoudriereExporter) Describe(ch chan<- *prometheus.Desc) {
+func (s *Exporter) Describe(ch chan<- *prometheus.Desc) {
 	ch <- poudriereStatusDesc
 }
 
-func (s *PoudriereExporter) Collect(ch chan<- prometheus.Metric) {
+func (s *Exporter) Collect(ch chan<- prometheus.Metric) {
 	cmd := exec.Command("/usr/local/bin/poudriere", "status", "-fH")
 
 	out, err := cmd.Output()
@@ -80,8 +80,8 @@ func (s *PoudriereExporter) Collect(ch chan<- prometheus.Metric) {
 	}
 }
 
-func readPoudriereStats(r io.Reader) ([]PoudriereStat, error) {
-	var stats []PoudriereStat
+func readPoudriereStats(r io.Reader) ([]Stat, error) {
+	var stats []Stat
 
 	zero, err := time.Parse("15:04:05", "00:00:00")
 	if err != nil {
@@ -128,7 +128,7 @@ func readPoudriereStats(r io.Reader) ([]PoudriereStat, error) {
 			return nil, err
 		}
 
-		stat := PoudriereStat{
+		stat := Stat{
 			Set:    parts[0],
 			Ports:  parts[1],
 			Jail:   parts[2],

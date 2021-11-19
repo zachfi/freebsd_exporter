@@ -1,0 +1,50 @@
+project_name: znet
+
+env:
+  - GO111MODULE=on
+
+before:
+  hooks:
+    - go mod download
+
+builds:
+  - id: znet
+    # dir: cmd/znet
+    binary: znet
+    env:
+      - CGO_ENABLED=0
+    goarm:
+      - "5"
+      - "6"
+      - "7"
+    goos:
+      - freebsd
+    goarch:
+      - amd64
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.appName={{.Binary}}
+
+archives:
+  - replacements:
+      freebsd: FreeBSD
+      linux: Linux
+      amd64: x86_64
+checksum:
+  name_template: "{{ .ProjectName }}_checksums.txt"
+snapshot:
+  name_template: "{{ .Tag }}-next"
+# Already using git-chglog
+changelog:
+  skip: true
+
+dockers:
+  - dockerfile: build/package/Dockerfile
+    image_templates:
+      - "xaque208/znet:{{ .Tag }}"
+      - "xaque208/znet:v{{ .Major }}.{{ .Minor }}"
+      - "xaque208/znet:latest"
+    build_flag_templates:
+      - "--pull"
+      - "--label=repository=https://github.com/xaque208/znet"
+release:
+  name_template: "{{.ProjectName}} v{{.Version}}"

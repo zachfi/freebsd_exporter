@@ -19,21 +19,21 @@ var (
 	)
 )
 
-type NFSExporter struct {
+type Exporter struct {
 	logger log.Logger
 }
 
-func NewExporter(logger log.Logger) (*NFSExporter, error) {
-	return &NFSExporter{
+func NewExporter(logger log.Logger) (*Exporter, error) {
+	return &Exporter{
 		logger: log.With(logger, "exporter", "nfs"),
 	}, nil
 }
 
-func (s *NFSExporter) Describe(ch chan<- *prometheus.Desc) {
+func (s *Exporter) Describe(ch chan<- *prometheus.Desc) {
 	ch <- nfsServerOpertionsDesc
 }
 
-func (s *NFSExporter) Collect(ch chan<- prometheus.Metric) {
+func (s *Exporter) Collect(ch chan<- prometheus.Metric) {
 	cmd := exec.Command("/usr/bin/nfsstat", "-E", "--libxo=json")
 
 	var out bytes.Buffer
@@ -44,64 +44,110 @@ func (s *NFSExporter) Collect(ch chan<- prometheus.Metric) {
 		return
 	}
 
-	var stats NFSStat
+	var stats Stat
 	err = json.Unmarshal(out.Bytes(), &stats)
 	if err != nil {
 		_ = level.Error(s.logger).Log("err", err.Error())
 		return
 	}
 
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Getattr), "getattr")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Setattr), "setattr")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Lookup), "lookup")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Readlink), "readlink")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Read), "read")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Write), "write")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Create), "create")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Remove), "remove")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Rename), "rename")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Link), "link")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Symlink), "symlink")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Rmdir), "mkdir")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Rmdir), "rmdir")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Readdir), "readdir")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Rdirplus), "rdirplus")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Access), "acces")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Mknod), "mknod")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Fsstat), "fsstat")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Fsinfo), "fsinfo")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Pathconf), "pathconf")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Commit), "commit")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Lookup), "lookup")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Setclientid), "setclientid")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Getattr), "getattr")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Setattr), "setattr")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Lookup), "lookup")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Readlink), "readlink")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Read), "read")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Write), "write")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Create), "create")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Remove), "remove")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Rename), "rename")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Link), "link")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Symlink), "symlink")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Rmdir), "mkdir")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Rmdir), "rmdir")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Readdir), "readdir")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Rdirplus), "rdirplus")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Access), "acces")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Mknod), "mknod")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Fsstat), "fsstat")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Fsinfo), "fsinfo")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Pathconf), "pathconf")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Commit), "commit")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Lookup), "lookup")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Setclientid), "setclientid")
 
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Setclientidcfrm), "setclientidcfrm")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Open), "open")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Opendwgr), "opendwgr")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Openattr), "openattr")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Opencfrm), "opencfrm")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Delepurge), "delepurge")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Delreg), "delreg")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Getfh), "getfh")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Setclientidcfrm), "setclientidcfrm")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Clientstats.Operations.Open), "open")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Opendwgr), "opendwgr")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Openattr), "openattr")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Opencfrm), "opencfrm")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Delepurge), "delepurge")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Delreg), "delreg")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Getfh), "getfh")
 
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Lock), "lock")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Lockt), "lockt")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Locku), "localu")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Close), "close")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Verify), "verify")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Nverify), "nverify")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Putfh), "putfh")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Putpubfh), "putpubfh")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Putrootfh), "putrootfh")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Renew), "renew")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Restore), "restore")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Savefh), "savefh")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Secinfo), "secinfo")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Rellockown), "rellockown")
-	ch <- prometheus.MustNewConstMetric(nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.V4Create), "v4create")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Lock), "lock")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Lockt), "lockt")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Locku), "localu")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Close), "close")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Verify), "verify")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Nverify), "nverify")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Putfh), "putfh")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Putpubfh), "putpubfh")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Putrootfh), "putrootfh")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Renew), "renew")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Restore), "restore")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Savefh), "savefh")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Secinfo), "secinfo")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.Rellockown), "rellockown")
+	ch <- prometheus.MustNewConstMetric(
+		nfsServerOpertionsDesc, prometheus.GaugeValue, float64(stats.Nfsstat.Nfsv4.Serverstats.Operations.V4Create), "v4create")
 }
 
-type NFSStat struct {
+type Stat struct {
 	Version string `json:"__version"`
 	Nfsstat struct {
 		Nfsv4 struct {
