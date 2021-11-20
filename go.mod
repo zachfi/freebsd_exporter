@@ -8,7 +8,7 @@ require (
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/viper v1.9.0
 	github.com/stretchr/testify v1.7.0
-	github.com/xaque208/znet v0.30.1
+	github.com/xaque208/znet v0.30.3
 )
 
 require (
