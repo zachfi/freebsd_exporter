@@ -103,10 +103,10 @@ github.com/stretchr/testify/assert
 # github.com/subosito/gotenv v1.2.0
 ## explicit
 github.com/subosito/gotenv
-# github.com/xaque208/znet v0.30.17
+# github.com/xaque208/znet v0.30.22
 ## explicit; go 1.13
 github.com/xaque208/znet/pkg/util
-# golang.org/x/sys v0.0.0-20211205182925-97ca703d548d
+# golang.org/x/sys v0.0.0-20211209171907-798191bca915
 ## explicit; go 1.17
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
