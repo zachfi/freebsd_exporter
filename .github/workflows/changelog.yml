@@ -2,18 +2,18 @@ name: Changelog
 
 on:
   push:
-    tags: ['v*']
+    tags: ["v*"]
 
 jobs:
   createPullRequest:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - uses: actions/setup-go@v3
         with:
-          go-version: 1.17.x
+          go-version: 1.18.x
 
       - name: Update Changelog
         run: |
