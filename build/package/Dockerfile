@@ -1,4 +1,5 @@
-FROM alpine:3.15
-COPY znet /bin/znet
-RUN mkdir /var/znet
-ENTRYPOINT ["/bin/znet"]
+FROM alpine:3.16
+COPY freebsd_exporter /bin/freebsd_exporter
+RUN chmod 0700 /bin/freebsd_exporter
+RUN apk --update add ca-certificates tzdata
+ENTRYPOINT ["/bin/freebsd_exporter"]

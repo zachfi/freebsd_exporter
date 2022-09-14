@@ -17,7 +17,10 @@ docker-login:
 	@echo ${DOCKER_PASSWORD} | $(DOCKER) login -u ${DOCKER_USERNAME} --password-stdin
 
 docker:
-	docker build -t xaque208/znet .
+	docker build -t xaque208/freebsd_exporter .
 
+docker-snapshot: docker
+	docker tag xaque208/freebsd_exporter:latest xaque208/freebsd_exporter:${PROJECT_VER}
+	docker push xaque208/freebsd_exporter:${PROJECT_VER}
 
 .PHONY: docker-login

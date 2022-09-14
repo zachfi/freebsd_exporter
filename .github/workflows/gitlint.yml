@@ -10,10 +10,10 @@ jobs:
   gitlint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 20
-      - uses: g4s8/gitlint-action@0.3.1
+      - uses: g4s8/gitlint-action@0.2
         with:
-          since: "2021-11-18"
+          since: "2020-03-30"
           pattern: '(chore|docs|feat|fix|refactor|tests?)(\([^\)]+\))?: .*'
