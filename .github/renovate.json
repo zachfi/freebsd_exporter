@@ -12,5 +12,10 @@
   "labels": [
     "dependencies"
   ],
-  "prConcurrentLimit": 4
+  "prConcurrentLimit": 4,
+  "automerge": true,
+  "assignAutomerge": true,
+  "reviewers": [
+    "xaque208"
+  ]
 }

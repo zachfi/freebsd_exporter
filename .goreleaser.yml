@@ -1,4 +1,4 @@
-project_name: znet
+project_name: freebsd_exporter
 
 env:
   - GO111MODULE=on
@@ -8,21 +8,25 @@ before:
     - go mod download
 
 builds:
-  - id: znet
-    # dir: cmd/znet
-    binary: znet
+  - id: freebsd_exporter
+    dir: cmd/freebsd_exporter
+    binary: freebsd_exporter
     env:
       - CGO_ENABLED=0
     goarm:
-      - "5"
-      - "6"
-      - "7"
+      - 6
+      - 7
     goos:
+      - linux
       - freebsd
     goarch:
       - amd64
+      - arm
     ldflags:
       - -s -w -X main.version={{.Version}} -X main.appName={{.Binary}}
+    ignore:
+      - goos: freebsd
+        goarch: arm
 
 archives:
   - replacements:
@@ -37,14 +41,6 @@ snapshot:
 changelog:
   skip: true
 
-dockers:
-  - dockerfile: build/package/Dockerfile
-    image_templates:
-      - "xaque208/znet:{{ .Tag }}"
-      - "xaque208/znet:v{{ .Major }}.{{ .Minor }}"
-      - "xaque208/znet:latest"
-    build_flag_templates:
-      - "--pull"
-      - "--label=repository=https://github.com/xaque208/znet"
+
 release:
   name_template: "{{.ProjectName}} v{{.Version}}"
