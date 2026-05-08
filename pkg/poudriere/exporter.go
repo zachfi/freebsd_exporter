@@ -91,41 +91,58 @@ func readPoudriereStats(r io.Reader) ([]Stat, error) {
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
 		line := scanner.Text()
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+
 		parts := strings.Split(line, "\t")
+		// `poudriere status -fH` emits 13 tab-separated fields. Skip
+		// truncated/malformed lines so a single bad row doesn't drop
+		// the whole scrape.
+		if len(parts) < 13 {
+			continue
+		}
 
 		queue, err := strconv.Atoi(parts[5])
 		if err != nil {
-			return nil, err
+			continue
 		}
 
 		built, err := strconv.Atoi(parts[6])
 		if err != nil {
-			return nil, err
+			continue
 		}
 
 		fail, err := strconv.Atoi(parts[7])
 		if err != nil {
-			return nil, err
+			continue
 		}
 
 		skip, err := strconv.Atoi(parts[8])
 		if err != nil {
-			return nil, err
+			continue
 		}
 
 		ignore, err := strconv.Atoi(parts[9])
 		if err != nil {
-			return nil, err
+			continue
 		}
 
 		remain, err := strconv.Atoi(parts[10])
 		if err != nil {
-			return nil, err
+			continue
 		}
 
-		statTime, err := time.Parse("15:04:05", parts[11])
-		if err != nil {
-			return nil, err
+		// Elapsed time is "HH:MM:SS" for completed/in-progress builds, but
+		// poudriere emits "0" (or empty) for idle/queued rows. Treat both
+		// as zero duration rather than aborting the line.
+		var dur time.Duration
+		if t := parts[11]; t != "" && t != "0" {
+			statTime, perr := time.Parse("15:04:05", t)
+			if perr != nil {
+				continue
+			}
+			dur = statTime.Sub(zero)
 		}
 
 		stat := Stat{
@@ -140,7 +157,7 @@ func readPoudriereStats(r io.Reader) ([]Stat, error) {
 			Skip:   skip,
 			Ignore: ignore,
 			Remain: remain,
-			Time:   statTime.Sub(zero),
+			Time:   dur,
 			Logs:   parts[12],
 		}
 
