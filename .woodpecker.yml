@@ -1,0 +1,45 @@
+# freebsd_exporter is FreeBSD-only and ships as a port via zach/personal-ports.
+# No Docker artifacts — pipeline runs lint/test/vuln plus a freebsd cross-compile
+# to catch GOOS=freebsd build breakage early. Releases happen via tag pushes
+# (followed by a personal-ports distinfo bump).
+
+clone:
+  - name: clone
+    image: registry.znet/znet/plugin-git:latest
+
+steps:
+  # Run tests. USE_LOCAL_TOOLS=1 skips the RUN_TOOL docker wrapper since we are
+  # already executing inside the tools container.
+  - name: test
+    image: registry.znet/znet/go-ci-tools:latest
+    pull: true
+    environment:
+      USE_LOCAL_TOOLS: "1"
+    commands:
+      - make test
+    when:
+      - event: [push, pull_request, manual]
+
+  # Scan for known vulnerabilities on every push and PR.
+  - name: vuln
+    image: registry.znet/znet/go-ci-tools:latest
+    pull: true
+    environment:
+      USE_LOCAL_TOOLS: "1"
+    commands:
+      - make vuln
+    when:
+      - event: [push, pull_request, manual]
+
+  # Cross-compile the FreeBSD binary so we catch GOOS=freebsd-only breakage in
+  # CI even though the runner is Linux. The artifact is not published — the
+  # FreeBSD port (sysutils/freebsd_exporter) builds from source on the target.
+  - name: compile-freebsd
+    image: registry.znet/znet/go-ci-tools:latest
+    pull: true
+    environment:
+      USE_LOCAL_TOOLS: "1"
+    commands:
+      - make compile-freebsd
+    when:
+      - event: [push, pull_request, manual]

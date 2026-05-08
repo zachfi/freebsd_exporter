@@ -1,0 +1,341 @@
+# https://taskfile.dev
+
+version: "3"
+
+env:
+  GO111MODULE: on
+  GOPROXY: https://proxy.golang.org,direct
+
+tasks:
+  dev:
+    desc: Setup git hooks
+    cmds:
+      - cp -f scripts/pre-commit.sh .git/hooks/pre-commit
+
+  setup:
+    desc: Install dependencies
+    cmds:
+      - go mod tidy
+
+  docker:setup:
+    desc: Setup Docker for multi-arch image builds
+    cmds:
+      - "docker buildx create --name=goreleaser --driver-opt network=host --use || true"
+      - docker run --privileged --rm tonistiigi/binfmt --install all
+
+  build:
+    desc: Build the binary
+    sources:
+      - ./**/*.go
+    generates:
+      - ./goreleaser
+    cmds:
+      - go build
+
+  test:
+    desc: Run tests
+    env:
+      LC_ALL: C
+    vars:
+      TEST_OPTIONS: '{{default "" .TEST_OPTIONS}}'
+      SOURCE_FILES: '{{default "./..." .SOURCE_FILES}}'
+      TEST_PATTERN: '{{default "." .TEST_PATTERN}}'
+    cmds:
+      - go test {{.TEST_OPTIONS}} -failfast -race -coverpkg=./... -covermode=atomic -coverprofile=coverage.txt {{.SOURCE_FILES}} -run {{.TEST_PATTERN}} -timeout=15m
+
+  fuzz:tmpl:
+    cmds:
+      - scripts/fuzz.sh ./internal/tmpl 30s
+
+  fuzz:artifact:
+    cmds:
+      - scripts/fuzz.sh ./internal/artifact 30s
+
+  fuzz:
+    desc: Run fuzz tests
+  cmds:
+    - task: fuzz:tmpl
+    - task: fuzz:artifact
+
+  test:golden:update:
+    desc: Run all tests that write goldne files, updating the files.
+    sources:
+      - ./pkg/config/*.go
+      - ./pkg/context/*.go
+    cmds:
+      - ./scripts/test-golden.sh
+
+  cover:
+    desc: Open the cover tool
+    cmds:
+      - go tool cover -html=coverage.txt
+
+  fmt:
+    desc: gofumpt all code
+    cmds:
+      - gofumpt -w -l .
+
+  lint:
+    desc: Lint the code with golangci-lint
+    cmds:
+      - golangci-lint run --tests --timeout 10m --fix --config ./.golangci.yaml ./...
+
+  ci:
+    desc: Run all CI steps
+    cmds:
+      - task: setup
+      - task: build
+      - task: test
+
+  default:
+    desc: Runs the default tasks
+    cmds:
+      - task: ci
+
+  nix:licenses:generate:
+    desc: Generate nix/licenses.go
+    cmds:
+      - ./scripts/gen-nix-licenses.sh
+    generates:
+      - ./internal/pipe/nix/licenses.go
+
+  schema:generate:
+    desc: Generate JSONSchema
+    cmds:
+      - go run . schema -o ./www/static/schema.json
+    sources:
+      - pkg/config/config.go
+    generates:
+      - ./www/static/schema.json
+
+  schema:validate:
+    desc: Validate JSONSchema
+    cmds:
+      - jv ./www/static/schema.json
+    sources:
+      - ./www/static/schema.json
+
+  docs:generate:
+    desc: Generate docs
+    cmds:
+      - scripts/copy-doc.sh CONTRIBUTING.md www/content/resources/contributing.md
+      - scripts/copy-doc.sh USERS.md www/content/resources/users.md
+      - scripts/copy-doc.sh EULA.md www/content/resources/eula.md
+      - scripts/copy-doc.sh SECURITY.md www/content/resources/security.md
+    sources:
+      - CONTRIBUTING.md
+      - USERS.md
+      - EULA.md
+      - SECURITY.md
+    generates:
+      - www/content/resources/contributing.md
+      - www/content/resources/users.md
+      - www/content/resources/eula.md
+      - www/content/resources/security.md
+
+  docs:sponsors:
+    desc: Update OpenCollective and GitHub sponsors list
+    cmds:
+      - which sponsors || go install github.com/goreleaser/sponsors@main
+      - sponsors generate --config gh://goreleaser/.github/sponsors.yml sponsors.json
+      - sponsors apply sponsors.json gh://goreleaser/.github/sponsors.tpl.md ./README.md
+      - sponsors apply sponsors.json ./.github/templates/sponsors.tpl.md ./www/content/sponsors.md
+      - sponsors apply sponsors.json ./.github/templates/index.tpl.html ./www/layouts/index.html
+    sources:
+      - ./README.md
+      - ./www/content/sponsors.md
+      - ./www/layouts/index.html
+      - ./.github/sponsors/sponsors.json
+      - ./.github/sponsors/sponsors.yml
+    generates:
+      - ./README.md
+      - ./www/content/sponsors.md
+      - ./www/layouts/index.html
+      - ./.github/sponsors/sponsors.json
+
+  docs:releases:
+    desc: Generate releases.json and latest files
+    cmds:
+      - ./scripts/get-releases.sh
+    generates:
+      - www/static/releases.json
+      - www/static/releases-pro.json
+      - www/static/latest
+      - www/static/latest-pro
+
+  docs:imgs:
+    desc: Download and resize images
+    cmds:
+      - wget -O www/static/favicon.svg https://raw.githubusercontent.com/goreleaser/artwork/refs/heads/master/goreleaser.svg
+      - wget -O www/static/card.png https://raw.githubusercontent.com/goreleaser/artwork/master/twitter-card.png
+      - wget -O www/static/hero.png https://raw.githubusercontent.com/goreleaser/artwork/master/hero.png
+      - convert -background none www/static/favicon.svg -define icon:auto-resize=64,48,32,16 www/static/favicon.ico
+      - convert -background none www/static/favicon.svg -resize 16x16 -depth 8 www/static/favicon-16x16.png
+      - convert -background none www/static/favicon.svg -resize 32x32 -depth 8 www/static/favicon-32x32.png
+      - convert -background none www/static/favicon.svg -resize x120 -depth 8 www/static/apple-touch-icon.png
+      - convert -background none www/static/favicon.svg -resize 192x192 -depth 8 www/static/android-chrome-192x192.png
+      - convert -background none www/static/favicon.svg -resize 512x512 -depth 8 www/static/android-chrome-512x512.png
+
+  docs:serve:
+    desc: Start documentation server
+    cmds:
+      - task: docs:generate
+      - cd www && hugo server --buildDrafts --bind 0.0.0.0
+
+  docs:build:
+    desc: Build docs
+    sources:
+      - ./www/content/
+      - ./www/hugo.yaml
+    generates:
+      - ./www/public
+    cmds:
+      - task: docs:generate
+      - cd www && hugo --minify
+
+  docs:test:
+    desc: Test docs with htmltest
+    cmds:
+      - task: docs:generate
+      - cd www && hugo --minify --baseURL "/"
+      - htmltest www/public -c www/htmltest.yml
+
+  release:
+    desc: Create a new tag
+    vars:
+      NEXT:
+        sh: svu n
+    prompt: "This will release {{.NEXT}}. Continue?"
+    preconditions:
+      - sh: '[ $(git symbolic-ref --short HEAD) = "main" ]'
+        msg: Not on main branch
+      - sh: "[ $(git status --porcelain=2 | wc -l) = 0 ]"
+        msg: "Git is dirty"
+    cmds:
+      - git tag -d nightly
+      - git tag -m {{.NEXT}} {{.NEXT}}
+      - echo {{.NEXT}}
+      - git push origin --tags
+
+  release:watch:
+    vars:
+      RUN_ID:
+        sh: "gh run list --workflow=release.yml --limit 1 --json databaseId | jq -r '.[] | .databaseId'"
+    cmds:
+      - gh run watch {{.RUN_ID}}
+
+  goreleaser:test:pkg:
+    desc: Test a package
+    cmds:
+      - docker pull --platform linux/{{.Platform}} {{.Image}}
+      - docker run --platform linux/{{.Platform}} --rm --workdir /tmp -v $PWD/dist:/tmp {{.Image}} sh -c '{{.Cmd}} && goreleaser --version'
+
+  goreleaser:test:rpm:
+    desc: Tests rpm packages
+    vars:
+      rpm: "rpm --nodeps -ivh"
+    cmds:
+      - task: goreleaser:test:pkg
+        vars:
+          Platform: "386"
+          Image: centos:centos7
+          Cmd: "{{.rpm}} goreleaser-*.i386.rpm"
+      - task: goreleaser:test:pkg
+        vars:
+          Platform: "amd64"
+          Image: fedora
+          Cmd: "{{.rpm}} goreleaser-*.x86_64.rpm"
+      - task: goreleaser:test:pkg
+        vars:
+          Platform: "arm64"
+          Image: fedora
+          Cmd: "{{.rpm}} goreleaser-*.aarch64.rpm"
+
+  goreleaser:test:deb:
+    desc: Tests deb packages
+    vars:
+      dpkg: "dpkg --ignore-depends=git -i"
+    cmds:
+      - task: goreleaser:test:pkg
+        vars:
+          Platform: "amd64"
+          Image: ubuntu
+          Cmd: "{{.dpkg}} goreleaser*_amd64.deb"
+      - task: goreleaser:test:pkg
+        vars:
+          Platform: "arm64"
+          Image: ubuntu
+          Cmd: "{{.dpkg}} goreleaser*_arm64.deb"
+      - task: goreleaser:test:pkg
+        vars:
+          Platform: "arm/7"
+          Image: ubuntu
+          Cmd: "{{.dpkg}} goreleaser*_armhf.deb"
+
+  goreleaser:test:apk:
+    desc: Tests apk packages
+    vars:
+      apk: "apk add --allow-untrusted -U"
+    cmds:
+      - task: goreleaser:test:pkg
+        vars:
+          Platform: "386"
+          Image: alpine
+          Cmd: "{{.apk}} goreleaser*_x86.apk"
+      - task: goreleaser:test:pkg
+        vars:
+          Platform: "amd64"
+          Image: alpine
+          Cmd: "{{.apk}} goreleaser*_x86_64.apk"
+      - task: goreleaser:test:pkg
+        vars:
+          Platform: "arm64"
+          Image: alpine
+          Cmd: "{{.apk}} goreleaser*_aarch64.apk"
+      - task: goreleaser:test:pkg
+        vars:
+          Platform: "arm/7"
+          Image: alpine
+          Cmd: "{{.apk}} goreleaser*_armv7.apk"
+
+  goreleaser:test:
+    desc: Test built linux packages
+    cmds:
+      - task: goreleaser:test:apk
+      - task: goreleaser:test:deb
+      - task: goreleaser:test:rpm
+
+  goreleaser:
+    desc: Run GoReleaser either in snapshot or release mode
+    deps:
+      - build
+    vars:
+      SNAPSHOT:
+        sh: 'if [[ $GITHUB_REF != refs/tags/v* ]]; then echo "--snapshot"; fi'
+    cmds:
+      - ./goreleaser release --clean --timeout 60m {{.SNAPSHOT}}
+
+  nightly:watch:
+    vars:
+      RUN_ID:
+        sh: "gh run list --workflow=nightly-oss.yml --limit 1 --json databaseId | jq -r '.[] | .databaseId'"
+    cmds:
+      - gh run watch {{.RUN_ID}}
+
+  nightly:
+    cmds:
+      - gh run list --workflow=nightly-oss.yml
+      - gh workflow run nightly-oss.yml
+      - sleep 5
+      - task: nightly:watch
+
+  licenses:check:
+    cmds:
+      - |
+        go run github.com/google/go-licenses/v2@latest check \
+          --allowed_licenses=MIT,Apache-2.0,BSD-3-Clause,BSD-2-Clause,ISC,MPL-2.0 \
+          --ignore github.com/in-toto \
+          --ignore github.com/multiformats/go-base36 \
+          --ignore github.com/ipfs/bbloom \
+          --ignore github.com/cyberphone/json-canonicalization/go/src/webpki.org/jsoncanonicalizer \
+          ./...

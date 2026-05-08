@@ -3,26 +3,9 @@
 package tools
 
 import (
-	// build/test.mk
-	_ "github.com/stretchr/testify/assert"
-
-	// build/lint.mk
-	_ "github.com/client9/misspell/cmd/misspell"
-	_ "github.com/golangci/golangci-lint/cmd/golangci-lint"
-	_ "github.com/psampaz/go-mod-outdated"
-	_ "golang.org/x/tools/cmd/goimports"
-
-	// build/document.mk
-	_ "github.com/git-chglog/git-chglog/cmd/git-chglog"
-	_ "golang.org/x/tools/cmd/godoc"
-
-	// build/test.mk
+	_ "github.com/golangci/golangci-lint/v2/cmd/golangci-lint"
+	_ "github.com/goreleaser/goreleaser/v2"
+	_ "golang.org/x/vuln/cmd/govulncheck"
 	_ "gotest.tools/gotestsum"
-
-	// build/release.mk
-	_ "github.com/goreleaser/goreleaser"
-
-	// build/compile.mk
-	_ "github.com/Masterminds/sprig/v3"
-	_ "moul.io/protoc-gen-gotemplate"
+	_ "mvdan.cc/gofumpt"
 )

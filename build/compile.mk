@@ -37,22 +37,21 @@ compile-all: deps-only
 compile-only: deps-only
 	@echo "=== $(PROJECT_NAME) === [ compile          ]: building commands:"
 	@mkdir -p $(BUILD_DIR)/$(GOOS)
-	CGO_ENABLED=0 GOOS=$(GOOS) $(GO) build -ldflags=$(LDFLAGS) -o $(BUILD_DIR)/$(GOOS)/$(PROJECT_NAME) . ; 
-	@# @for b in $(BINS); do \
-	# 	echo "=== $(PROJECT_NAME) === [ compile          ]:     $(BUILD_DIR)$(GOOS)/$$b"; \
-	# 	BUILD_FILES=`find $(SRCDIR)/cmd/$$b -type f -name "*.go"` ; \
-		GOOS=$(GOOS) $(GO) build -ldflags=$(LDFLAGS) -o $(BUILD_DIR)/$(GOOS)/$$b $$BUILD_FILES ; \
-	# done
+	@for b in $(BINS); do \
+		echo "=== $(PROJECT_NAME) === [ compile          ]:     $(BUILD_DIR)$(GOOS)/$$b"; \
+		BUILD_FILES=`find $(SRCDIR)/cmd/$$b -type f -name "*.go"` ; \
+		CGO_ENABLED=0 GOOS=$(GOOS) $(GO) build -ldflags=$(LDFLAGS) -o $(BUILD_DIR)/$(GOOS)/$$b $$BUILD_FILES ; \
+	done
 
 # Override GOOS for these specific targets
-compile-freebsd: GOOS=freebsd
-compile-freebsd: deps-only compile-only
+compile-darwin: GOOS=darwin
+compile-darwin: deps-only compile-only
 
 compile-linux: GOOS=linux
 compile-linux: deps-only compile-only
 
-compile-windows: GOOS=windows
-compile-windows: deps-only compile-only
+compile-freebsd: GOOS=freebsd
+compile-freebsd: deps-only compile-only
 
 
-.PHONY: clean-compile compile compile-freebsd compile-linux compile-only compile-windows
+.PHONY: clean-compile compile compile-darwin compile-linux compile-only compile-freebsd

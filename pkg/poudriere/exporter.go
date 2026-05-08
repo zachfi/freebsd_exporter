@@ -4,13 +4,12 @@ import (
 	"bufio"
 	"bytes"
 	"io"
+	"log/slog"
 	"os/exec"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -24,7 +23,7 @@ var (
 )
 
 type Exporter struct {
-	logger log.Logger
+	logger *slog.Logger
 }
 
 type Stat struct {
@@ -43,9 +42,9 @@ type Stat struct {
 	Logs   string
 }
 
-func NewExporter(logger log.Logger) (*Exporter, error) {
+func NewExporter(logger *slog.Logger) (*Exporter, error) {
 	return &Exporter{
-		logger: log.With(logger, "exporter", "poudriere"),
+		logger: logger.With("exporter", "poudriere"),
 	}, nil
 }
 
@@ -58,7 +57,7 @@ func (s *Exporter) Collect(ch chan<- prometheus.Metric) {
 
 	out, err := cmd.Output()
 	if err != nil {
-		_ = level.Error(s.logger).Log("err", err.Error())
+		s.logger.Error("poudriere status failed", "err", err)
 		return
 	}
 
@@ -66,7 +65,7 @@ func (s *Exporter) Collect(ch chan<- prometheus.Metric) {
 
 	stats, err := readPoudriereStats(r)
 	if err != nil {
-		_ = level.Error(s.logger).Log("err", err.Error())
+		s.logger.Error("parse poudriere status failed", "err", err)
 		return
 	}
 

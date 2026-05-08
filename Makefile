@@ -12,13 +12,15 @@ GO            = go
 # The root module (from go.mod)
 PROJECT_MODULE  ?= $(shell $(GO) list -m)
 
+VERSION    ?= $(PROJECT_VER)
+
 #############################
 # Targets
 #############################
 all: build
 
 # Humans running make:
-build: check-version clean lint test cover-report proto gofmt-fix compile
+build: check-version clean lint test cover-report gofmt-fix compile
 
 # Build command for CI tooling
 build-ci: check-version clean lint test compile-only
@@ -26,10 +28,10 @@ build-ci: check-version clean lint test compile-only
 # All clean commands
 clean: cover-clean compile-clean release-clean
 
-# Import fragments
+# Import fragments. freebsd_exporter is FreeBSD-only and ships as a port via
+# zach/personal-ports — Docker doesn't run on FreeBSD, so docker.mk is omitted.
 include build/compile.mk
 include build/deps.mk
-include build/docker.mk
 include build/document.mk
 include build/lint.mk
 include build/release.mk

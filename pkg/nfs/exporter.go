@@ -3,10 +3,9 @@ package nfs
 import (
 	"bytes"
 	"encoding/json"
+	"log/slog"
 	"os/exec"
 
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -20,12 +19,12 @@ var (
 )
 
 type Exporter struct {
-	logger log.Logger
+	logger *slog.Logger
 }
 
-func NewExporter(logger log.Logger) (*Exporter, error) {
+func NewExporter(logger *slog.Logger) (*Exporter, error) {
 	return &Exporter{
-		logger: log.With(logger, "exporter", "nfs"),
+		logger: logger.With("exporter", "nfs"),
 	}, nil
 }
 
@@ -40,14 +39,14 @@ func (s *Exporter) Collect(ch chan<- prometheus.Metric) {
 	cmd.Stdout = &out
 	err := cmd.Run()
 	if err != nil {
-		_ = level.Error(s.logger).Log("err", err.Error())
+		s.logger.Error("nfsstat failed", "err", err)
 		return
 	}
 
 	var stats Stat
 	err = json.Unmarshal(out.Bytes(), &stats)
 	if err != nil {
-		_ = level.Error(s.logger).Log("err", err.Error())
+		s.logger.Error("nfsstat output unmarshal failed", "err", err)
 		return
 	}
 

@@ -1,0 +1,148 @@
+// Package mattermost announces releases to Mattermost.
+package mattermost
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"net/http"
+
+	"github.com/caarlos0/env/v11"
+	"github.com/caarlos0/log"
+
+	"github.com/goreleaser/goreleaser/v2/internal/retryx"
+	"github.com/goreleaser/goreleaser/v2/internal/tmpl"
+	"github.com/goreleaser/goreleaser/v2/pkg/context"
+)
+
+const (
+	defaultColor           = "#2D313E"
+	defaultUsername        = `GoReleaser`
+	defaultMessageTemplate = `{{ .ProjectName }} {{ .Tag }} is out! Check it out at {{ .ReleaseURL }}`
+	defaultMessageTitle    = `{{ .ProjectName }} {{ .Tag }} is out!`
+)
+
+type Pipe struct{}
+
+func (Pipe) String() string { return "mattermost" }
+func (Pipe) Skip(ctx *context.Context) (bool, error) {
+	enable, err := tmpl.New(ctx).Bool(ctx.Config.Announce.Mattermost.Enabled)
+	return !enable, err
+}
+
+type Config struct {
+	Webhook string `env:"MATTERMOST_WEBHOOK,notEmpty"`
+}
+
+func (Pipe) Default(ctx *context.Context) error {
+	if ctx.Config.Announce.Mattermost.MessageTemplate == "" {
+		ctx.Config.Announce.Mattermost.MessageTemplate = defaultMessageTemplate
+	}
+
+	if ctx.Config.Announce.Mattermost.TitleTemplate == "" {
+		ctx.Config.Announce.Mattermost.TitleTemplate = defaultMessageTitle
+	}
+	if ctx.Config.Announce.Mattermost.Username == "" {
+		ctx.Config.Announce.Mattermost.Username = defaultUsername
+	}
+	if ctx.Config.Announce.Mattermost.Color == "" {
+		ctx.Config.Announce.Mattermost.Color = defaultColor
+	}
+
+	return nil
+}
+
+func (p Pipe) Announce(ctx *context.Context) error {
+	msg, err := tmpl.New(ctx).Apply(ctx.Config.Announce.Mattermost.MessageTemplate)
+	if err != nil {
+		return err
+	}
+
+	title, err := tmpl.New(ctx).Apply(ctx.Config.Announce.Mattermost.TitleTemplate)
+	if err != nil {
+		return err
+	}
+
+	cfg, err := env.ParseAs[Config]()
+	if err != nil {
+		return err
+	}
+
+	log.Infof("posting: %q", msg)
+
+	wm := &incomingWebhookRequest{
+		Username:    ctx.Config.Announce.Mattermost.Username,
+		IconEmoji:   ctx.Config.Announce.Mattermost.IconEmoji,
+		IconURL:     ctx.Config.Announce.Mattermost.IconURL,
+		ChannelName: ctx.Config.Announce.Mattermost.Channel,
+		Attachments: []*mattermostAttachment{
+			{
+				Title: title,
+				Text:  msg,
+				Color: ctx.Config.Announce.Mattermost.Color,
+			},
+		},
+	}
+
+	return postWebhook(ctx, cfg.Webhook, wm)
+}
+
+func postWebhook(ctx *context.Context, url string, msg *incomingWebhookRequest) error {
+	payload, err := json.Marshal(msg)
+	if err != nil {
+		return fmt.Errorf("failed to marshal the message: %w", err)
+	}
+
+	return retryx.Do(ctx, ctx.Config.Retry, func() error {
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(payload))
+		if err != nil {
+			return retryx.Unrecoverable(fmt.Errorf("failed new request: %w", err))
+		}
+		req.Header.Set("Content-Type", "application/json")
+
+		r, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return retryx.HTTP(err, r)
+		}
+		defer r.Body.Close()
+
+		if r.StatusCode >= http.StatusBadRequest {
+			return retryx.HTTP(
+				fmt.Errorf("unexpected status code: %d %s", r.StatusCode, http.StatusText(r.StatusCode)),
+				r,
+			)
+		}
+
+		return nil
+	}, retryx.IsRetriable)
+}
+
+type incomingWebhookRequest struct {
+	Text        string                  `json:"text"`
+	Username    string                  `json:"username"`
+	IconURL     string                  `json:"icon_url"`
+	ChannelName string                  `json:"channel"`
+	Attachments []*mattermostAttachment `json:"attachments"`
+	IconEmoji   string                  `json:"icon_emoji"`
+}
+
+type mattermostAttachment struct {
+	Fallback   string                       `json:"fallback"`
+	Color      string                       `json:"color"`
+	Pretext    string                       `json:"pretext"`
+	AuthorName string                       `json:"author_name"`
+	AuthorLink string                       `json:"author_link"`
+	AuthorIcon string                       `json:"author_icon"`
+	Title      string                       `json:"title"`
+	TitleLink  string                       `json:"title_link"`
+	Text       string                       `json:"text"`
+	Fields     []*mattermostAttachmentField `json:"fields"`
+	Footer     string                       `json:"footer"`
+	FooterIcon string                       `json:"footer_icon"`
+}
+
+type mattermostAttachmentField struct {
+	Title string `json:"title"`
+	Value any    `json:"value"`
+	Short bool   `json:"short"`
+}

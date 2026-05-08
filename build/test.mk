@@ -18,7 +18,9 @@ PROJECT_MODULE ?= $(shell $(GO) list -m)
 
 LDFLAGS_UNIT ?= '-X $(PROJECT_MODULE)/internal/version.GitTag=$(PROJECT_VER_TAGGED)'
 
-test: test-only
+test:
+	@$(RUN_TOOL) make test-only
+
 test-only: test-unit test-integration
 
 test-unit:
@@ -50,4 +52,8 @@ cover-report:
 cover-view: cover-report
 	@$(GO) tool cover -html=$(COVERAGE_DIR)/coverage.out
 
-.PHONY: test test-only test-unit test-integration cover-report cover-view
+vuln:
+	@echo "=== $(PROJECT_NAME) === [ vuln             ]: running govulncheck..."
+	@$(RUN_TOOL) govulncheck ./...
+
+.PHONY: test test-only test-unit test-integration cover-report cover-view vuln
