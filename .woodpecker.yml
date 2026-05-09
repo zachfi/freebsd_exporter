@@ -2,10 +2,10 @@
 # No Docker artifacts — pipeline runs lint/test/vuln plus a freebsd cross-compile
 # to catch GOOS=freebsd build breakage early. Releases happen via tag pushes
 # (followed by a personal-ports distinfo bump).
-
-clone:
-  - name: clone
-    image: registry.znet/znet/plugin-git:latest
+#
+# No explicit clone block: the repo is private on Forgejo, and only the default
+# clone image is on the netrc allow list, so a custom clone image fetches
+# unauthenticated and fails with "could not read Username for ...".
 
 steps:
   # Run tests. USE_LOCAL_TOOLS=1 skips the RUN_TOOL docker wrapper since we are
