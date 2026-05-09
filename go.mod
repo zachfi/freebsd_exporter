@@ -1,8 +1,6 @@
 module github.com/zachfi/freebsd_exporter
 
-go 1.26.2
-
-toolchain go1.26.3
+go 1.26.3
 
 require (
 	github.com/golangci/golangci-lint/v2 v2.12.2
