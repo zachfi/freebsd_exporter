@@ -15,10 +15,6 @@ steps:
     pull: true
     environment:
       USE_LOCAL_TOOLS: "1"
-      # The go-ci-tools image pins GOTOOLCHAIN=local, which blocks the auto
-      # download of newer toolchains. go.mod requires >=1.26.3 (CVE fixes), so
-      # override per step to let go fetch the patched runtime.
-      GOTOOLCHAIN: auto
     commands:
       - make test
     when:
@@ -30,10 +26,6 @@ steps:
     pull: true
     environment:
       USE_LOCAL_TOOLS: "1"
-      # The go-ci-tools image pins GOTOOLCHAIN=local, which blocks the auto
-      # download of newer toolchains. go.mod requires >=1.26.3 (CVE fixes), so
-      # override per step to let go fetch the patched runtime.
-      GOTOOLCHAIN: auto
     commands:
       - make vuln
     when:
@@ -47,10 +39,6 @@ steps:
     pull: true
     environment:
       USE_LOCAL_TOOLS: "1"
-      # The go-ci-tools image pins GOTOOLCHAIN=local, which blocks the auto
-      # download of newer toolchains. go.mod requires >=1.26.3 (CVE fixes), so
-      # override per step to let go fetch the patched runtime.
-      GOTOOLCHAIN: auto
     commands:
       - make compile-freebsd
     when:
